@@ -1,20 +1,33 @@
 import React from "react";
 import TokenItem from "../TokenItem";
 
-const TokenInput = ({ tokens, onChange, onRemove }) => {
+const TokenInput = ({ tokens, maxTokens = 5, minChars = 3, onChange, onRemove }, inputRef) => {
   const handleChange = e => {
     const text = e.target.value;
-    onChange(text);
+    if (text.length >= minChars) {
+      onChange(text);
+    }
   };
 
   return (
-    <div className="autosuggest_input">
-      {tokens.map(token => (
-        <TokenItem key={token.imdbID} token={token} onRemove={() => onRemove(token)} />
-      ))}
-      <input type="text" onChange={handleChange} />
-    </div>
+    <React.Fragment>
+      <div className="autosuggest_input">
+        {tokens.map(token => (
+          <TokenItem key={token.imdbID} token={token} onRemove={() => onRemove(token)} />
+        ))}
+        {tokens.length < maxTokens ?
+          <input ref={inputRef} type="text" onChange={handleChange} />
+          : null
+        }
+      </div>
+      <p className="autosuggest_info">
+        {tokens.length === maxTokens
+          ? `* You can add maximum ${maxTokens} movies.`
+          : `* Type minimum ${minChars} characters to search.`
+        }
+      </p>
+    </React.Fragment>
   );
 };
 
-export default TokenInput;
+export default React.forwardRef(TokenInput);

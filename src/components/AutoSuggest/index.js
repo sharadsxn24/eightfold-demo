@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TokenInput from "../TokenInput";
 import SuggestionList from "../SuggestionList";
 import { debounce } from "../../utils";
@@ -8,25 +8,23 @@ const AutoSuggest = () => {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState([]);
   const [tokens, setTokens] = useState([]);
+  const [isListVisible, setIsListVisible] = useState(false);
+  const ref = React.createRef();
+  const inputRef = React.createRef();
 
-  const onChange = debounce(async text => {
-    if (text.length > 2) {
-      let resp = await fetch(`http://www.omdbapi.com/?s=${text}&apikey=66f13d85&type=movie`);
-      resp = await resp.json();
-      setItems(resp.Search || []);
-    } else {
-      setItems([]);
-    }
-    setQuery(text);
-  }, 200);
+  const onChange = debounce(async text => setQuery(text), 200);
 
   const onSelect = token => {
+    console.log('onSelect');
     const t = tokens.find(t => t.imdbID === token.imdbID);
     if (!t) {
       setTokens([...tokens, token]);
+      setItems([]);
+      setQuery('');
+      setIsListVisible(false);
     }
-    setItems([]);
   };
+
   const onRemove = token => {
     const arr = [...tokens];
     const index = arr.findIndex(t => t.imdbID === token.imdbID);
@@ -36,10 +34,51 @@ const AutoSuggest = () => {
     }
   };
 
+  // Hide suggestion list if clicked outside
+  useEffect(() => {
+    const onDocumentClick = (e) => {
+      if(ref.current && !ref.current.contains(e.target)) {
+        setIsListVisible(false);
+      } else if(inputRef.current && inputRef.current.contains(e.target)){
+        setIsListVisible(true);
+      }
+    };
+    document.addEventListener('click', onDocumentClick);
+    return () => document.removeEventListener('click', onDocumentClick);
+  }, [ref]);
+  
+  // Search for movies when query has changed
+  useEffect(() => {
+    const search = async () => {
+      let resp = await fetch(`http://www.omdbapi.com/?s=${query}&apikey=66f13d85&type=movie`);
+      resp = await resp.json();
+      setIsListVisible(true);
+      setItems(resp.Search || []);
+    }
+    search();
+  }, [query]);
+
+  // Clear the input and focus
+  useEffect(() => {
+    const clearInput = () => {
+      if (inputRef.current) {
+        inputRef.current.value = '';
+        inputRef.current.focus();
+      }
+    }
+    clearInput();
+  }, [tokens]);
+
   return (
-    <div className="autosuggest">
-      <TokenInput tokens={tokens} onChange={onChange} onRemove={onRemove} />
-      <SuggestionList items={items} onSelect={onSelect} query={query} />
+    <div className="autosuggest" ref={ref}>
+      <TokenInput
+        ref={inputRef}
+        tokens={tokens}
+        maxTokens={5}
+        minChars={3}
+        onChange={onChange}
+        onRemove={onRemove} />
+      <SuggestionList items={items} query={query} onSelect={onSelect} visible={isListVisible} />
     </div>
   );
 };
