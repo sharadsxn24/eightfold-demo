@@ -36,9 +36,9 @@ const AutoSuggest = () => {
   // Hide suggestion list if clicked outside
   useEffect(() => {
     const onDocumentClick = e => {
-      if (!ref.current.contains(e.target)) {
+      if (ref.current && !ref.current.contains(e.target)) {
         setIsListVisible(false);
-      } else if (inputRef.current.contains(e.target)) {
+      } else if (inputRef.current && inputRef.current.contains(e.target)) {
         setIsListVisible(true);
       }
     };
@@ -60,8 +60,10 @@ const AutoSuggest = () => {
   // Clear and focus the input
   useEffect(() => {
     const clearInput = () => {
-      inputRef.current.value = "";
-      inputRef.current.focus();
+      if (inputRef.current) {
+        inputRef.current.value = "";
+        inputRef.current.focus();
+      }
     };
     clearInput();
   }, [tokens]);

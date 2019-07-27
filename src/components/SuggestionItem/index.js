@@ -1,8 +1,6 @@
 import React from "react";
 
 const SuggestionItem = ({ query, item }) => {
-  console.log(query);
-
   const getTitle = (query, title) => {
     const match = title.match(new RegExp(query, "i"));
     if (match) {
