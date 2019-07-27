@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import TokenInput from "../TokenInput";
 import SuggestionList from "../SuggestionList";
 import { debounce } from "../../utils";
@@ -9,18 +9,17 @@ const AutoSuggest = () => {
   const [items, setItems] = useState([]);
   const [tokens, setTokens] = useState([]);
   const [isListVisible, setIsListVisible] = useState(false);
-  const ref = React.createRef();
-  const inputRef = React.createRef();
+  const ref = useRef();
+  const inputRef = useRef();
 
   const onChange = debounce(async text => setQuery(text), 200);
 
   const onSelect = token => {
-    console.log('onSelect');
     const t = tokens.find(t => t.imdbID === token.imdbID);
     if (!t) {
       setTokens([...tokens, token]);
       setItems([]);
-      setQuery('');
+      setQuery("");
       setIsListVisible(false);
     }
   };
@@ -36,17 +35,17 @@ const AutoSuggest = () => {
 
   // Hide suggestion list if clicked outside
   useEffect(() => {
-    const onDocumentClick = (e) => {
-      if(ref.current && !ref.current.contains(e.target)) {
+    const onDocumentClick = e => {
+      if (!ref.current.contains(e.target)) {
         setIsListVisible(false);
-      } else if(inputRef.current && inputRef.current.contains(e.target)){
+      } else if (inputRef.current.contains(e.target)) {
         setIsListVisible(true);
       }
     };
-    document.addEventListener('click', onDocumentClick);
-    return () => document.removeEventListener('click', onDocumentClick);
-  }, [ref]);
-  
+    document.addEventListener("click", onDocumentClick);
+    return () => document.removeEventListener("click", onDocumentClick);
+  }, []);
+
   // Search for movies when query has changed
   useEffect(() => {
     const search = async () => {
@@ -54,30 +53,22 @@ const AutoSuggest = () => {
       resp = await resp.json();
       setIsListVisible(true);
       setItems(resp.Search || []);
-    }
-    search();
+    };
+    query && search();
   }, [query]);
 
-  // Clear the input and focus
+  // Clear and focus the input
   useEffect(() => {
     const clearInput = () => {
-      if (inputRef.current) {
-        inputRef.current.value = '';
-        inputRef.current.focus();
-      }
-    }
+      inputRef.current.value = "";
+      inputRef.current.focus();
+    };
     clearInput();
   }, [tokens]);
 
   return (
     <div className="autosuggest" ref={ref}>
-      <TokenInput
-        ref={inputRef}
-        tokens={tokens}
-        maxTokens={5}
-        minChars={3}
-        onChange={onChange}
-        onRemove={onRemove} />
+      <TokenInput ref={inputRef} tokens={tokens} maxTokens={5} minChars={3} onChange={onChange} onRemove={onRemove} />
       <SuggestionList items={items} query={query} onSelect={onSelect} visible={isListVisible} />
     </div>
   );
