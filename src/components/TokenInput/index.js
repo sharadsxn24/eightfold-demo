@@ -2,12 +2,21 @@ import React from "react";
 import TokenItem from "../TokenItem";
 
 const TokenInput = ({ tokens, maxTokens = 5, minChars = 3, onChange, onRemove }, inputRef) => {
+  
+  const KEY_BACKSPACE = 8;
+
   const handleChange = e => {
     const text = e.target.value;
     if (text.length >= minChars) {
       onChange(text);
     }
   };
+
+  const onKeyDown = e => {
+    if(e.which === KEY_BACKSPACE && !!tokens.length && !e.target.value){
+      onRemove(tokens[tokens.length - 1]);
+    }
+  }
 
   return (
     <React.Fragment>
@@ -16,7 +25,7 @@ const TokenInput = ({ tokens, maxTokens = 5, minChars = 3, onChange, onRemove },
           <TokenItem key={token.imdbID} token={token} onRemove={() => onRemove(token)} />
         ))}
         {tokens.length < maxTokens ?
-          <input ref={inputRef} type="text" onChange={handleChange} />
+          <input ref={inputRef} type="text" onChange={handleChange} onKeyDown={onKeyDown} />
           : null
         }
       </div>
